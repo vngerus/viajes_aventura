@@ -1,35 +1,38 @@
 from CONFIG.db import DatabaseConnection
 
 class PaqueteDAO:
+
     def __init__(self):
         self.db = DatabaseConnection.get_instance()
 
-    def crear_paquete(self, nombre, descripcion, precio, stock):
+    def crear_paquete(self, nombre: str, descripcion: str, precio: float, stock: int):
+        if precio <= 0 or stock < 0:
+            raise ValueError("Precio o stock inválido")
+
         conn = self.db.conectar()
-        if not conn: return False
         cursor = conn.cursor()
+
         try:
-            sql = "INSERT INTO paquetes (nombre, descripcion, precio, stock) VALUES (%s, %s, %s, %s)"
-            cursor.execute(sql, (nombre, descripcion, precio, stock))
+            cursor.execute(
+                "INSERT INTO paquetes (nombre, descripcion, precio, stock) VALUES (%s,%s,%s,%s)",
+                (nombre, descripcion, precio, stock)
+            )
             conn.commit()
-            return True
-        except Exception as e:
-            print(f"Error al crear paquete: {e}")
-            return False
+        except Exception:
+            conn.rollback()
+            raise
         finally:
             cursor.close()
 
-    def eliminar_paquete(self, id_paquete):
+    def eliminar_paquete(self, paquete_id: int):
         conn = self.db.conectar()
-        if not conn: return False
         cursor = conn.cursor()
+
         try:
-            sql = "DELETE FROM paquetes WHERE id = %s"
-            cursor.execute(sql, (id_paquete,))
+            cursor.execute("DELETE FROM paquetes WHERE id=%s", (paquete_id,))
             conn.commit()
-            return True
-        except Exception as e:
-            print(f"Error al eliminar: {e}")
-            return False
+        except Exception:
+            conn.rollback()
+            raise
         finally:
             cursor.close()

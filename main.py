@@ -1,197 +1,251 @@
-from DAO.usuario_dao import UsuarioDAO
-from DAO.reserva_dao import ReservaDAO
-from DAO.paquete_dao import PaqueteDAO
 import os
 import sys
 import SCRIPTS.setup_database as setup_db
 
-# Intentamos importar msvcrt para los asteriscos (Solo Windows)
+from DAO.usuario_dao import UsuarioDAO
+from DAO.reserva_dao import ReservaDAO
+from DAO.paquete_dao import PaqueteDAO
+
+# ==============================
+# UTILIDADES DE CONSOLA
+# ==============================
+
 try:
-    import msvcrt
+    import msvcrt  # Windows
 except ImportError:
     msvcrt = None
-    import getpass
+    import getpass  # Linux / Mac
+
 
 def limpiar_pantalla():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
 
-def input_password(mensaje="Contraseña: "):
-    """Permite escribir contraseña mostrando asteriscos"""
+
+def input_password(mensaje: str = "Contraseña: ") -> str:
+    """
+    Captura contraseña de forma segura.
+    En Windows muestra asteriscos.
+    En Linux/Mac oculta el texto.
+    """
     if msvcrt:
-        print(mensaje, end='', flush=True)
+        print(mensaje, end="", flush=True)
         password = ""
+
         while True:
             char = msvcrt.getch()
-            
-            if char == b'\r':  # Enter
+
+            if char == b"\r":  # ENTER
                 print()
                 break
-            elif char == b'\x08':  # Backspace
+            elif char == b"\x08":  # BACKSPACE
                 if password:
                     password = password[:-1]
-                    # Borra el asterisco visualmente: Retrocede, Espacio, Retrocede
-                    print('\b \b', end='', flush=True)
-            elif char == b'\x03': # Ctrl+C para salir si se arrepiente
+                    print("\b \b", end="", flush=True)
+            elif char == b"\x03":  # CTRL+C
                 print("\nCancelado.")
                 sys.exit()
             else:
-                # Decodificar el byte a caracter y agregarlo
                 try:
-                    char_decoded = char.decode('utf-8')
-                    password += char_decoded
-                    print('*', end='', flush=True)
-                except:
-                    pass # Ignorar teclas especiales
+                    password += char.decode("utf-8")
+                    print("*", end="", flush=True)
+                except UnicodeDecodeError:
+                    pass
+
         return password
     else:
-        # Fallback para Mac/Linux (no muestra asteriscos, pero oculta el texto)
         return getpass.getpass(mensaje)
+
+
+# ==============================
+# MENÚS
+# ==============================
 
 def mostrar_menu_principal():
     print("\n--- ✈️  VIAJES AVENTURA  ✈️ ---")
     print("1. Iniciar Sesión")
-    print("2. Registrarse (Clientes)")
+    print("2. Registrarse")
     print("3. Salir")
 
+
 def mostrar_menu_admin():
-    print(f"\n--- 🛠️ PANEL DE ADMINISTRADOR ---")
-    print("1. Agregar Nuevo Paquete")
+    print("\n--- 🛠️ PANEL ADMINISTRADOR ---")
+    print("1. Agregar Paquete")
     print("2. Eliminar Paquete")
-    print("3. Ver Lista de Paquetes")
+    print("3. Ver Paquetes")
     print("4. Cerrar Sesión")
 
-def mostrar_menu_usuario(usuario_nombre):
-    print(f"\n--- 🎒 Bienvenido, {usuario_nombre} ---")
+
+def mostrar_menu_usuario(nombre: str):
+    print(f"\n--- 🎒 Bienvenido, {nombre} ---")
     print("1. Ver Paquetes y Reservar")
-    print("2. Mi Historial de Reservas")
+    print("2. Mi Historial")
     print("3. Cerrar Sesión")
 
+
+# ==============================
+# MAIN
+# ==============================
+
 def main():
-    # 1. Verificar e inicializar base de datos automáticamente
+    # Inicializar sistema y BD
     print("⚙️ Verificando sistema...")
     setup_db.inicializar_base_datos()
     limpiar_pantalla()
 
-    # 2. Instanciamos todos los DAOs
+    # DAOs
     usuario_dao = UsuarioDAO()
     reserva_dao = ReservaDAO()
-    paquete_dao = PaqueteDAO() 
-    
-    usuario_actual = None # Almacena el DTO del usuario logueado
+    paquete_dao = PaqueteDAO()
+
+    usuario_actual = None
 
     while True:
-        # --- ESTADO: NO LOGUEADO ---
+
+        # ==============================
+        # NO LOGUEADO
+        # ==============================
         if not usuario_actual:
             mostrar_menu_principal()
-            opcion = input("Seleccione una opción: ")
+            opcion = input("Seleccione una opción: ").strip()
 
-            if opcion == '1': # LOGIN
-                email = input("Email: ")
-                # AQUÍ USAMOS LA NUEVA FUNCIÓN CON ASTERISCOS
-                password = input_password("Contraseña: ")
-                
-                login_result = usuario_dao.login(email, password)
-                
-                if login_result:
-                    usuario_actual = login_result
-                    print(f"✅ ¡Login exitoso! Rol: {usuario_actual.rol}")
-                else:
-                    print("❌ Credenciales incorrectas.")
-            
-            elif opcion == '2': # REGISTRO (Solo Clientes)
-                nombre = input("Nombre completo: ")
-                email = input("Email: ")
-                # AQUÍ TAMBIÉN USAMOS LA NUEVA FUNCIÓN
-                password = input_password("Contraseña: ")
-                
-                if usuario_dao.registrar(nombre, email, password):
-                    print("✅ Usuario registrado. Ahora inicie sesión.")
-                else:
-                    print("❌ Error al registrar (¿El email ya existe?).")
-            
-            elif opcion == '3': # SALIR
-                print("¡Hasta luego!")
+            # LOGIN
+            if opcion == "1":
+                email = input("Email: ").strip()
+                password = input_password()
+
+                try:
+                    usuario_actual = usuario_dao.login(email, password)
+                    print(f"✅ Bienvenido {usuario_actual.nombre} ({usuario_actual.rol})")
+                except ValueError as e:
+                    print(f"❌ {e}")
+                except Exception:
+                    print("❌ Error interno del sistema")
+
+            # REGISTRO
+            elif opcion == "2":
+                nombre = input("Nombre completo: ").strip()
+                email = input("Email: ").strip()
+                password = input_password()
+
+                try:
+                    usuario_dao.registrar(nombre, email, password)
+                    print("✅ Usuario registrado correctamente")
+                except ValueError as e:
+                    print(f"❌ {e}")
+                except Exception:
+                    print("❌ Error al registrar usuario")
+
+            # SALIR
+            elif opcion == "3":
+                print("👋 Hasta luego")
                 break
-        
-        # --- ESTADO: LOGUEADO ---
-        else:
-            if usuario_actual.rol == 'admin':
-                mostrar_menu_admin()
-                opcion = input(">> ")
-
-                if opcion == '1': # Agregar Paquete
-                    try:
-                        nombre = input("Nombre del Paquete: ")
-                        desc = input("Descripción corta: ")
-                        precio = float(input("Precio: "))
-                        stock = int(input("Stock inicial: "))
-                        if paquete_dao.crear_paquete(nombre, desc, precio, stock):
-                            print("✅ Paquete creado exitosamente.")
-                    except ValueError:
-                        print("❌ Error: Precio y Stock deben ser números.")
-
-                elif opcion == '2': # Eliminar Paquete
-                    try:
-                        id_p = int(input("Ingrese ID del paquete a eliminar: "))
-                        if paquete_dao.eliminar_paquete(id_p):
-                            print("✅ Paquete eliminado.")
-                        else:
-                            print("❌ Error al eliminar (quizás no existe).")
-                    except ValueError:
-                        print("❌ Error: Ingrese un ID numérico.")
-
-                elif opcion == '3': # Listar
-                    paquetes = reserva_dao.listar_paquetes()
-                    print("\n--- Inventario Actual ---")
-                    print(f"{'ID':<5} {'Nombre':<25} {'Stock'}")
-                    for p in paquetes:
-                        print(f"{p['id']:<5} {p['nombre']:<25} {p['stock']}")
-
-                elif opcion == '4':
-                    usuario_actual = None
-                    print("Sesión cerrada.")
 
             else:
-                mostrar_menu_usuario(usuario_actual.nombre)
-                opcion = input(">> ")
+                print("Opción inválida")
 
-                if opcion == '1': # Reservar
-                    paquetes = reserva_dao.listar_paquetes()
-                    print("\n--- Paquetes Disponibles ---")
-                    print(f"{'ID':<5} {'Nombre':<25} {'Precio':<12} {'Stock'}")
-                    print("-" * 50)
-                    for p in paquetes:
-                        print(f"{p['id']:<5} {p['nombre']:<25} ${p['precio']:<11} {p['stock']}")
-                    
+        # ==============================
+        # LOGUEADO
+        # ==============================
+        else:
+            # -------- ADMIN --------
+            if usuario_actual.rol == "admin":
+                mostrar_menu_admin()
+                opcion = input(">> ").strip()
+
+                if opcion == "1":  # Crear paquete
                     try:
-                        pid = int(input("\nIngrese ID del paquete a reservar (0 para volver): "))
-                        if pid > 0:
-                            paquete_selec = next((p for p in paquetes if p['id'] == pid), None)
-                            if paquete_selec:
-                                confirm = input(f"¿Confirmar reserva de '{paquete_selec['nombre']}' por ${paquete_selec['precio']}? (s/n): ")
-                                if confirm.lower() == 's':
-                                    exito = reserva_dao.crear_reserva(usuario_actual.id, pid, paquete_selec['precio'])
-                                    if exito:
-                                        print("🎉 ¡Reserva confirmada con éxito!")
-                                    else:
-                                        print("❌ No se pudo reservar (Stock agotado o error).")
-                            else:
-                                print("ID no válido.")
+                        nombre = input("Nombre: ")
+                        desc = input("Descripción: ")
+                        precio = float(input("Precio: "))
+                        stock = int(input("Stock: "))
+                        paquete_dao.crear_paquete(nombre, desc, precio, stock)
+                        print("✅ Paquete creado")
                     except ValueError:
-                        print("Error: Ingrese un número válido.")
+                        print("❌ Datos inválidos")
+                    except Exception:
+                        print("❌ Error al crear paquete")
 
-                elif opcion == '2': # Historial
-                    historial = reserva_dao.obtener_historial(usuario_actual.id)
-                    print("\n--- 📜 Tu Historial ---")
-                    if not historial:
-                        print("No tienes reservas aún.")
-                    else:
-                        for h in historial:
-                            print(f"[{h.fecha}] {h.nombre_paquete} - ${h.total_pagado} ({h.estado})")
-                
-                elif opcion == '3':
+                elif opcion == "2":  # Eliminar paquete
+                    try:
+                        pid = int(input("ID paquete: "))
+                        paquete_dao.eliminar_paquete(pid)
+                        print("✅ Paquete eliminado")
+                    except Exception:
+                        print("❌ Error al eliminar paquete")
+
+                elif opcion == "3":  # Listar paquetes
+                    paquetes = reserva_dao.listar_paquetes()
+                    print("\nID   Nombre                     Stock")
+                    print("-" * 40)
+                    for p in paquetes:
+                        print(f"{p['id']:<4} {p['nombre']:<25} {p['stock']}")
+
+                elif opcion == "4":
                     usuario_actual = None
-                    print("Sesión cerrada.")
+                    print("Sesión cerrada")
+
+                else:
+                    print("Opción inválida")
+
+            # -------- CLIENTE --------
+            else:
+                mostrar_menu_usuario(usuario_actual.nombre)
+                opcion = input(">> ").strip()
+
+                if opcion == "1":  # Reservar
+                    paquetes = reserva_dao.listar_paquetes()
+                    print("\nID   Nombre                     Precio   Stock")
+                    print("-" * 55)
+                    for p in paquetes:
+                        print(f"{p['id']:<4} {p['nombre']:<25} ${p['precio']:<8} {p['stock']}")
+
+                    try:
+                        pid = int(input("\nID del paquete (0 volver): "))
+                        if pid == 0:
+                            continue
+
+                        paquete = next((p for p in paquetes if p["id"] == pid), None)
+                        if not paquete:
+                            print("❌ ID inválido")
+                            continue
+
+                        confirm = input(
+                            f"¿Confirmar '{paquete['nombre']}' por ${paquete['precio']}? (s/n): "
+                        ).lower()
+
+                        if confirm == "s":
+                            reserva_dao.crear_reserva(
+                                usuario_actual.id,
+                                pid,
+                                paquete["precio"]
+                            )
+                            print("🎉 Reserva confirmada")
+
+                    except ValueError as e:
+                        print(f"❌ {e}")
+                    except Exception:
+                        print("❌ No se pudo completar la reserva")
+
+                elif opcion == "2":  # Historial
+                    historial = reserva_dao.obtener_historial(usuario_actual.id)
+                    print("\n--- 📜 Historial ---")
+                    if not historial:
+                        print("Sin reservas")
+                    else:
+                        for r in historial:
+                            print(f"[{r.fecha}] {r.nombre_paquete} - ${r.total_pagado}")
+
+                elif opcion == "3":
+                    usuario_actual = None
+                    print("Sesión cerrada")
+
+                else:
+                    print("Opción inválida")
+
+
+# ==============================
+# ENTRY POINT
+# ==============================
 
 if __name__ == "__main__":
     main()
