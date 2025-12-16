@@ -6,5 +6,5 @@ class Security:
         return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
     @staticmethod
-    def verify_password(stored_hash, input_password):
-        return stored_hash == hashlib.sha256(input_password.encode('utf-8')).hexdigest()
+    def verify_password(stored_hash, password):
+        return stored_hash == Security.hash_password(password)
