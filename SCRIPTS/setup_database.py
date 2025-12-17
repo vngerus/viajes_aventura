@@ -30,18 +30,32 @@ def inicializar_base_datos():
         with open(ruta_sql, "r", encoding="utf-8") as archivo:
             sql_script = archivo.read()
         
-        statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip() and not stmt.strip().startswith('--')]
+        # Dividir por punto y coma, pero manejar múltiples líneas
+        statements = []
+        current_statement = ""
+        for line in sql_script.split('\n'):
+            line = line.strip()
+            if not line or line.startswith('--'):
+                continue
+            current_statement += " " + line
+            if line.endswith(';'):
+                statements.append(current_statement.strip().rstrip(';'))
+                current_statement = ""
         
+        # Ejecutar cada sentencia
         for statement in statements:
             if statement:
                 try:
                     cursor.execute(statement)
+                    conn.commit()
                 except mysql.connector.Error as e:
-                    if "already exists" not in str(e).lower() and "database exists" not in str(e).lower():
+                    error_msg = str(e).lower()
+                    if "already exists" not in error_msg and "database exists" not in error_msg:
                         print(f"Advertencia: {e}")
 
         print("Base de datos y tablas verificadas")
 
+        # Seleccionar la base de datos
         conn.database = os.getenv("DB_NAME")
         cursor = conn.cursor()
         crear_admin(cursor)
@@ -51,7 +65,7 @@ def inicializar_base_datos():
 
     except mysql.connector.Error as err:
         print(f" Error MySQL: {err}")
-        print("💡 Verifica que MySQL esté encendido y las credenciales sean correctas")
+        print("Verifica que MySQL este encendido y las credenciales sean correctas")
 
     except Exception as e:
         print(f" Error inesperado: {e}")

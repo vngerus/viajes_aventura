@@ -12,25 +12,81 @@ Sistema de gestion de reservas turisticas desarrollado en Python para la agencia
 
 ## Instrucciones - Configurar y Ejecutar la App
 
-1. **Crear y activar el entorno virtual**:
+### 1. Crear y activar el entorno virtual
 
+**Windows (PowerShell/CMD):**
 ```bash
 python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate
 ```
 
-2. **Instalar dependencias**:
+**Windows (Git Bash):**
+```bash
+python -m venv venv
+source venv/Scripts/activate
+```
+
+**Linux/Mac:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**Verificar que el venv está activo:**
+- Deberías ver `(venv)` al inicio de la línea de comandos
+- Verificar con: `python -c "import sys; print(sys.executable)"` (debe apuntar a `venv\Scripts\python.exe`)
+
+### 2. Instalar dependencias
+
+**IMPORTANTE:** Asegúrate de que el venv esté activo antes de instalar.
 
 ```bash
-python -m pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
+# Actualizar pip
+python -m pip install --upgrade pip
+
+# Instalar todas las dependencias
+python -m pip install -r requirements.txt
 ```
 
-3. **Configurar variables de entorno**:
+**Verificar instalación:**
+```bash
+python -c "import mysql.connector; print('✅ mysql-connector-python instalado')"
+python -c "import dotenv; print('✅ python-dotenv instalado')"
+```
 
-Crear archivo `.env` en la raiz del proyecto:
+### 3. Configurar variables de entorno
 
+Crear archivo `.env` en la raíz del proyecto con el siguiente contenido:
+
+**Windows (PowerShell):**
+```powershell
+@"
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=tu_contraseña
+DB_NAME=viajes_aventura
+"@ | Out-File -FilePath .env -Encoding utf8
+```
+
+**Windows (CMD):**
+```cmd
+echo DB_HOST=localhost > .env
+echo DB_USER=root >> .env
+echo DB_PASS=tu_contraseña >> .env
+echo DB_NAME=viajes_aventura >> .env
+```
+
+**Windows (Git Bash) / Linux / Mac:**
+```bash
+cat > .env << EOF
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=tu_contraseña
+DB_NAME=viajes_aventura
+EOF
+```
+
+**O crear manualmente:** Crear archivo `.env` en la raíz con:
 ```env
 DB_HOST=localhost
 DB_USER=root
@@ -38,16 +94,40 @@ DB_PASS=tu_contraseña
 DB_NAME=viajes_aventura
 ```
 
-4. **Inicializar la base de datos**:
+**Nota:** Si tu MySQL no tiene contraseña, deja `DB_PASS=` vacío.
+
+### 4. Inicializar la base de datos
+
+**IMPORTANTE:** Asegúrate de que:
+- El venv esté activo
+- MySQL esté corriendo
+- El archivo `.env` esté configurado correctamente
 
 ```bash
 python SCRIPTS/setup_database.py
 ```
 
-5. **Ejecutar la aplicacion**:
+**Si hay errores:**
+- Verifica que MySQL esté corriendo: `mysql --version`
+- Verifica las credenciales en `.env`
+- Asegúrate de usar el Python del venv: `venv\Scripts\python.exe SCRIPTS\setup_database.py` (Windows)
+
+### 5. Ejecutar la aplicación
 
 ```bash
 python main.py
+```
+
+**O usando el Python del venv directamente (si hay problemas):**
+
+**Windows:**
+```bash
+venv\Scripts\python.exe main.py
+```
+
+**Linux/Mac:**
+```bash
+venv/bin/python main.py
 ```
 
 ### Credenciales por Defecto
@@ -309,16 +389,28 @@ viajes_aventura/
 
 ### Error: "Access denied for user"
 
-- Verificar credenciales en `.env.example`
+- Verificar credenciales en `.env` (no `.env.example`)
 - Asegurar que MySQL este corriendo
+- Verificar que el usuario y contraseña sean correctos
+- Si MySQL no tiene contraseña, dejar `DB_PASS=` vacío en `.env`
 
 ### Error: "Table doesn't exist"
 
+- Asegúrate de que el venv esté activo
 - Ejecutar `python SCRIPTS/setup_database.py` para inicializar la BD
+- Si persiste, usar: `venv\Scripts\python.exe SCRIPTS\setup_database.py` (Windows)
+
+### Error: "ModuleNotFoundError: No module named 'mysql'"
+
+- El venv no está activo o las dependencias no están instaladas
+- Activar el venv: `venv\Scripts\activate` (Windows) o `source venv/bin/activate` (Linux/Mac)
+- Instalar dependencias: `python -m pip install -r requirements.txt`
+- Verificar: `python -c "import mysql.connector"`
 
 ### Error: "Credenciales invalidas" al iniciar sesion
 
 - Ejecutar `python SCRIPTS/recrear_admin.py` para recrear el admin
+- O usar: `venv\Scripts\python.exe SCRIPTS\recrear_admin.py` (Windows)
 
 ## Generar Diagramas
 
