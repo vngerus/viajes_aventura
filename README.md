@@ -12,6 +12,20 @@ Sistema de gestion de reservas turisticas desarrollado en Python para la agencia
 
 ## Instrucciones - Configurar y Ejecutar la App
 
+### Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- **Python 3.8 o superior**: Verificar con `python --version`
+- **MySQL Server**: Verificar con `mysql --version`
+- **Git Bash** (o terminal bash compatible)
+
+**Verificar instalaciones:**
+```bash
+python --version
+mysql --version
+```
+
 ### 1. Crear y activar el entorno virtual
 
 ```bash
@@ -28,10 +42,7 @@ source venv/Scripts/activate
 **IMPORTANTE:** Asegúrate de que el venv esté activo antes de instalar.
 
 ```bash
-# Actualizar pip
 python -m pip install --upgrade pip
-
-# Instalar todas las dependencias
 python -m pip install -r requirements.txt
 ```
 
@@ -67,18 +78,35 @@ DB_NAME=viajes_aventura
 ### 4. Inicializar la base de datos
 
 **IMPORTANTE:** Asegúrate de que:
-- El venv esté activo
-- MySQL esté corriendo
-- El archivo `.env` esté configurado correctamente
+- El venv esté activo (deberías ver `(venv)` en la terminal)
+- MySQL esté corriendo y accesible
+- El archivo `.env` esté configurado correctamente con tus credenciales de MySQL
 
+**Verificar que MySQL esté corriendo:**
+```bash
+mysql --version
+# Si no funciona, verifica que el servicio MySQL esté iniciado
+```
+
+**Inicializar la base de datos:**
 ```bash
 python SCRIPTS/setup_database.py
 ```
 
+**Salida esperada:**
+```
+ Inicializando sistema...
+ Ejecutando script: BDD\init_db.sql
+Base de datos y tablas verificadas
+Usuario administrador creado
+Sistema inicializado correctamente
+```
+
 **Si hay errores:**
 - Verifica que MySQL esté corriendo: `mysql --version`
-- Verifica las credenciales en `.env`
+- Verifica las credenciales en `.env` (usuario y contraseña correctos)
 - Asegúrate de que el venv esté activo
+- Si MySQL tiene contraseña, asegúrate de ponerla en `DB_PASS=` del archivo `.env`
 
 ### 5. Ejecutar la aplicación
 
@@ -338,33 +366,74 @@ viajes_aventura/
 
 ## Solucion de Problemas
 
-### Error: "Too many connections"
+### Error: "ModuleNotFoundError: No module named 'mysql'"
 
-- Verificar que se este usando el patron Singleton correctamente
-- Revisar que las conexiones se cierren despues de usar
+**Causa:** El venv no está activo o las dependencias no están instaladas.
+
+**Solución:**
+```bash
+source venv/Scripts/activate
+python -m pip install -r requirements.txt
+python -c "import mysql.connector; print('OK')"
+```
 
 ### Error: "Access denied for user"
 
-- Verificar credenciales en `.env` (no `.env.example`)
-- Asegurar que MySQL este corriendo
-- Verificar que el usuario y contraseña sean correctos
-- Si MySQL no tiene contraseña, dejar `DB_PASS=` vacío en `.env`
+**Causa:** Credenciales incorrectas o MySQL no está corriendo.
+
+**Solución:**
+1. Verificar que MySQL esté corriendo: `mysql --version`
+2. Verificar credenciales en `.env`:
+   - `DB_USER` debe ser un usuario válido de MySQL (generalmente `root`)
+   - `DB_PASS` debe ser la contraseña correcta (o vacío si no tiene)
+3. Probar conexión manual:
+   ```bash
+   mysql -u root -p
+   ```
 
 ### Error: "Table doesn't exist"
 
-- Asegúrate de que el venv esté activo
-- Ejecutar `python SCRIPTS/setup_database.py` para inicializar la BD
+**Causa:** La base de datos no ha sido inicializada.
 
-### Error: "ModuleNotFoundError: No module named 'mysql'"
+**Solución:**
+```bash
+source venv/Scripts/activate
+python SCRIPTS/setup_database.py
+```
 
-- El venv no está activo o las dependencias no están instaladas
-- Activar el venv: `venv\Scripts\activate` (Windows) o `source venv/bin/activate` (Linux/Mac)
-- Instalar dependencias: `python -m pip install -r requirements.txt`
-- Verificar: `python -c "import mysql.connector"`
+### Error: "Too many connections"
+
+**Causa:** Múltiples conexiones abiertas simultáneamente.
+
+**Solución:**
+- Cerrar todas las instancias de la aplicación
+- Verificar que se esté usando el patrón Singleton correctamente
+- Reiniciar MySQL si es necesario
 
 ### Error: "Credenciales invalidas" al iniciar sesion
 
-- Ejecutar `python SCRIPTS/recrear_admin.py` para recrear el admin
+**Causa:** El usuario admin no existe o la contraseña fue cambiada.
+
+**Solución:**
+```bash
+source venv/Scripts/activate
+python SCRIPTS/recrear_admin.py
+```
+
+**Credenciales por defecto del admin:**
+- Email: `admin@viajes.com`
+- Contraseña: `admin123`
+
+### Error al ejecutar `source venv/Scripts/activate`
+
+**Causa:** Ruta incorrecta o venv no creado.
+
+**Solución:**
+```bash
+ls -la venv/Scripts/
+python -m venv venv
+source venv/Scripts/activate
+```
 
 ## Generar Diagramas
 
