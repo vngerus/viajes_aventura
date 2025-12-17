@@ -1,6 +1,10 @@
 # enlace del repositorio
+
 https://github.com/vngerus/viajes_aventura
 
+# tablero Kanban
+
+https://github.com/users/vngerus/projects/9
 
 # Sistema de Gestion "Viajes Aventura"
 
