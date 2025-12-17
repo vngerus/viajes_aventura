@@ -71,7 +71,6 @@ class PaqueteDAO:
             cursor.close()
 
     def obtener_todos(self) -> list[dict]:
-
         conn = self.db.conectar()
         cursor = conn.cursor(dictionary=True)
         
@@ -99,6 +98,64 @@ class PaqueteDAO:
         
         cursor.close()
         return paquetes
+    
+    def obtener_por_id(self, paquete_id: int) -> dict | None:
+        conn = self.db.conectar()
+        cursor = conn.cursor(dictionary=True)
+        
+        sql = """
+            SELECT p.id, p.nombre, p.descripcion, p.precio, p.stock
+            FROM paquetes p
+            WHERE p.id = %s
+        """
+        cursor.execute(sql, (paquete_id,))
+        paquete = cursor.fetchone()
+        
+        if not paquete:
+            cursor.close()
+            return None
+        
+        # Obtener destinos del paquete
+        cursor.execute(
+            """
+            SELECT d.id, d.nombre, d.costo
+            FROM destinos d
+            JOIN paquete_destinos pd ON d.id = pd.destino_id
+            WHERE pd.paquete_id = %s
+            ORDER BY pd.orden
+            """,
+            (paquete_id,)
+        )
+        paquete['destinos'] = cursor.fetchall()
+        
+        cursor.close()
+        return paquete
+    
+    def actualizar_paquete(self, paquete_id: int, nombre: str, descripcion: str, precio: float, stock: int) -> None:
+        if precio < 0 or stock < 0:
+            raise ValueError("Precio y stock no pueden ser negativos")
+        
+        conn = self.db.conectar()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute(
+                "UPDATE paquetes SET nombre=%s, descripcion=%s, precio=%s, stock=%s WHERE id=%s",
+                (nombre, descripcion, precio, stock, paquete_id)
+            )
+            
+            if cursor.rowcount == 0:
+                raise ValueError("Paquete no encontrado")
+            
+            conn.commit()
+        except ValueError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise Exception(f"Error al actualizar paquete: {str(e)}")
+        finally:
+            cursor.close()
 
     def eliminar_paquete(self, paquete_id: int) -> None:
         conn = self.db.conectar()

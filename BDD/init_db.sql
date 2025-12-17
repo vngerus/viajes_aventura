@@ -51,11 +51,12 @@ CREATE TABLE IF NOT EXISTS paquete_destinos (
         ON DELETE CASCADE
 );
 
--- Tabla de Reservas
+-- Tabla de Reservas (puede ser de paquete o destino individual)
 CREATE TABLE IF NOT EXISTS reservas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
-    paquete_id INT NOT NULL,
+    paquete_id INT NULL,
+    destino_id INT NULL,
     fecha_reserva DATETIME DEFAULT CURRENT_TIMESTAMP,
     total_pagado DECIMAL(10,2) NOT NULL,
     estado ENUM('Confirmada', 'Cancelada') DEFAULT 'Confirmada',
@@ -68,7 +69,15 @@ CREATE TABLE IF NOT EXISTS reservas (
     CONSTRAINT fk_reservas_paquete
         FOREIGN KEY (paquete_id)
         REFERENCES paquetes(id)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_reservas_destino
+        FOREIGN KEY (destino_id)
+        REFERENCES destinos(id)
+        ON DELETE RESTRICT,
+    
+    CONSTRAINT chk_reserva_tipo
+        CHECK (paquete_id IS NOT NULL OR destino_id IS NOT NULL)
 );
 
 -- Datos iniciales: Destinos (solo si no existen)
