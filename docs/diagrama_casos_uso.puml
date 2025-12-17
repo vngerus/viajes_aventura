@@ -1,0 +1,63 @@
+@startuml diagrama_casos_uso
+
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #FFF9E3
+    BorderColor #F4A261
+}
+skinparam actor {
+    BackgroundColor #E8F4F8
+    BorderColor #2E86AB
+}
+
+title Diagrama de Casos de Uso\nSistema de Gestion "Viajes Aventura"
+
+actor Administrador as Admin
+actor Cliente as Cliente
+
+rectangle "Sistema Viajes Aventura" {
+    usecase "Gestionar Destinos" as UC_GestionarDestinos
+    usecase "Gestionar Paquetes" as UC_GestionarPaquetes
+    
+    usecase "Registrarse" as UC_Registrarse
+    usecase "Iniciar Sesion" as UC_IniciarSesion
+    usecase "Buscar Paquetes" as UC_BuscarPaquetes
+    usecase "Realizar Reserva" as UC_RealizarReserva
+    usecase "Ver Historial" as UC_VerHistorial
+}
+
+Admin --> UC_GestionarDestinos
+Admin --> UC_GestionarPaquetes
+
+Cliente --> UC_Registrarse
+Cliente --> UC_IniciarSesion
+Cliente --> UC_BuscarPaquetes
+Cliente --> UC_RealizarReserva
+Cliente --> UC_VerHistorial
+
+UC_RealizarReserva ..> UC_IniciarSesion : <<include>>
+
+note right of UC_RealizarReserva
+    <b>Seguridad:</b>
+    El caso de uso "Realizar Reserva"
+    requiere que el cliente esté
+    autenticado (include)
+end note
+
+note bottom of UC_GestionarDestinos
+    <b>Funcionalidades:</b>
+    - Crear destino
+    - Listar destinos
+    - Modificar destino
+    - Eliminar destino
+end note
+
+note bottom of UC_GestionarPaquetes
+    <b>Funcionalidades:</b>
+    - Crear paquete
+    - Asociar destinos
+    - Calcular precio automatico
+    - Gestionar stock
+end note
+
+@enduml

@@ -1,0 +1,222 @@
+@startuml diagrama_clases
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 5
+
+title Sistema de Gestion "Viajes Aventura"\nDiagrama de Clases UML
+
+package "Capa DTO - Data Transfer Objects" #DDFFDD {
+    
+    class UsuarioDTO {
+        +id: int
+        +nombre: str
+        +email: str
+        +rol: str
+        __
+        +to_dict(): dict
+    }
+    
+    class DestinoDTO {
+        +id: int
+        +nombre: str
+        +descripcion: str
+        +actividades: str
+        +costo: float
+        __
+        +to_dict(): dict
+    }
+    
+    class ReservaDTO {
+        +id: int
+        +nombre_paquete: str
+        +total_pagado: float
+        +fecha_reserva: datetime
+        +estado: str
+        __
+        +to_dict(): dict
+    }
+}
+
+package "Capa DAO - Data Access Objects" #DDDDFF {
+    
+    class UsuarioDAO {
+        -db: DatabaseConnection
+        __
+        +crear(nombre, email, password): void
+        +registrar(nombre, email, password): void
+        +login(email, password): UsuarioDTO
+        +obtener_por_email(email): UsuarioDTO
+    }
+    
+    class DestinoDAO {
+        -db: DatabaseConnection
+        __
+        +crear(nombre, descripcion, actividades, costo): int
+        +obtener_todos(): list<DestinoDTO>
+        +obtener_por_id(id): DestinoDTO
+        +actualizar(dto): void
+        +eliminar(id): void
+    }
+    
+    class PaqueteDAO {
+        -db: DatabaseConnection
+        -destino_dao: DestinoDAO
+        __
+        +crear_paquete(nombre, descripcion, stock, destino_ids): int
+        +crear_paquete_con_precio_manual(nombre, descripcion, precio, stock): int
+        +obtener_todos(): list<dict>
+        +obtener_por_id(id): dict
+        +actualizar_paquete(id, nombre, descripcion, stock, destino_ids): void
+        +eliminar_paquete(id): void
+        +calcular_precio_desde_destinos(destino_ids): float
+    }
+    
+    class ReservaDAO {
+        -db: DatabaseConnection
+        __
+        +listar_paquetes(): list<dict>
+        +crear_reserva(usuario_id, paquete_id, precio): void
+        +obtener_historial(usuario_id): list<ReservaDTO>
+    }
+}
+
+package "Conexion a Base de Datos" #FFFFDD {
+    class DatabaseConnection {
+        -_instance: DatabaseConnection
+        -connection: Connection
+        __
+        +{static} get_instance(): DatabaseConnection
+        +conectar(): Connection
+        +cerrar(): void
+    }
+}
+
+package "Capa de Servicios" #FFDDDD {
+    class AuthService {
+        -usuario_dao: UsuarioDAO
+        __
+        +registrar(nombre, email, password): void
+        +login(email, password): UsuarioDTO
+    }
+    
+    class ReservaService {
+        -reserva_dao: ReservaDAO
+        -paquete_dao: PaqueteDAO
+        __
+        +crear_reserva(usuario, paquete): void
+    }
+}
+
+package "Modelos de Dominio" #DDEEFF {
+    class Usuario {
+        -id: int
+        -nombre: str
+        -email: str
+        -password_hash: str
+        -rol: str
+        __
+        +es_admin(): bool
+    }
+    
+    class Destino {
+        -id: int
+        -nombre: str
+        -descripcion: str
+        -actividades: str
+        -costo: float
+    }
+    
+    class Paquete {
+        -id: int
+        -nombre: str
+        -descripcion: str
+        -precio: float
+        -stock: int
+    }
+    
+    class Reserva {
+        -id: int
+        -usuario_id: int
+        -paquete_id: int
+        -fecha_reserva: datetime
+        -total_pagado: float
+        -estado: str
+    }
+}
+
+package "Configuracion y Utilidades" #EEEEFF {
+    class Security {
+        +{static} hash_password(password): str
+        +{static} verify_password(stored_hash, password): bool
+    }
+    
+    class Validators {
+        +{static} validar_nombre(nombre): tuple<bool, str>
+        +{static} validar_email(email): bool
+        +{static} validar_password(password): tuple<bool, str>
+        +{static} validar_precio(precio): bool
+        +{static} validar_stock(stock): bool
+    }
+}
+
+' === RELACIONES DE DEPENDENCIA ===
+UsuarioDAO ..> UsuarioDTO : retorna
+DestinoDAO ..> DestinoDTO : retorna
+ReservaDAO ..> ReservaDTO : retorna
+
+' === RELACIONES DAO-DATABASE ===
+UsuarioDAO --> DatabaseConnection : conecta
+DestinoDAO --> DatabaseConnection : conecta
+PaqueteDAO --> DatabaseConnection : conecta
+ReservaDAO --> DatabaseConnection : conecta
+
+' === RELACIONES DE SERVICIOS ===
+AuthService --> UsuarioDAO : usa
+ReservaService --> ReservaDAO : usa
+ReservaService --> PaqueteDAO : usa
+
+' === RELACIONES DE UTILIDADES ===
+UsuarioDAO ..> Security : usa
+AuthService ..> Security : usa
+UsuarioDAO ..> Validators : usa
+AuthService ..> Validators : usa
+
+' === RELACIONES DE NEGOCIO ===
+PaqueteDAO --> DestinoDAO : usa
+Usuario "1" -- "*" Reserva : realiza
+Paquete "1" -- "*" Reserva : es parte de
+Paquete "*" -- "*" Destino : contiene
+
+' === NOTAS ===
+note right of DatabaseConnection
+  <b>Patrón Singleton</b>
+  Garantiza una única instancia
+  de conexión a la base de datos
+  para optimizar recursos
+end note
+
+note bottom of Security
+  <b>Seguridad:</b>
+  - Algoritmo: PBKDF2-HMAC-SHA256
+  - Salt aleatorio: 16 bytes
+  - Iteraciones: 100,000
+  - Hash resultante: 96 caracteres
+  (32 salt + 64 hash)
+end note
+
+note bottom of UsuarioDTO
+  <b>DTO Pattern</b>
+  Objeto de transferencia de datos
+  sin lógica de negocio.
+  Usado para comunicación entre capas
+end note
+
+note bottom of DatabaseConnection
+  <b>Conexion MySQL</b>
+  Base de datos: viajes_aventura
+  Librería: mysql-connector-python
+  Gestion de transacciones ACID
+end note
+
+@enduml

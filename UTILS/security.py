@@ -16,13 +16,20 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(stored_hash: str, password: str) -> bool:
-    salt = bytes.fromhex(stored_hash[:32])
-    saved_hash = stored_hash[32:]
+    if not stored_hash or len(stored_hash) < 64:
+        return False
+    
+    try:
+        salt = bytes.fromhex(stored_hash[:32])
+        saved_hash = stored_hash[32:]
 
-    pwd_hash = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode(),
-        salt,
-        _ITERATIONS
-    )
-    return pwd_hash.hex() == saved_hash
+        pwd_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode(),
+            salt,
+            _ITERATIONS
+        )
+        
+        return pwd_hash.hex() == saved_hash
+    except (ValueError, IndexError):
+        return False

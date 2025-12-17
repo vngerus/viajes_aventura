@@ -1,20 +1,18 @@
 import os
 import sys
+import signal
 import SCRIPTS.setup_database as setup_db
 
 from DAO.usuario_dao import UsuarioDAO
 from DAO.reserva_dao import ReservaDAO
 from DAO.paquete_dao import PaqueteDAO
-
-# ==============================
-# UTILIDADES DE CONSOLA
-# ==============================
+from DAO.destino_dao import DestinoDAO
 
 try:
-    import msvcrt  # Windows
+    import msvcrt
 except ImportError:
     msvcrt = None
-    import getpass  # Linux / Mac
+    import getpass
 
 
 def limpiar_pantalla():
@@ -22,11 +20,6 @@ def limpiar_pantalla():
 
 
 def input_password(mensaje: str = "Contraseña: ") -> str:
-    """
-    Captura contraseña de forma segura.
-    En Windows muestra asteriscos.
-    En Linux/Mac oculta el texto.
-    """
     if msvcrt:
         print(mensaje, end="", flush=True)
         password = ""
@@ -56,10 +49,6 @@ def input_password(mensaje: str = "Contraseña: ") -> str:
         return getpass.getpass(mensaje)
 
 
-# ==============================
-# MENÚS
-# ==============================
-
 def mostrar_menu_principal():
     print("\n--- ✈️  VIAJES AVENTURA  ✈️ ---")
     print("1. Iniciar Sesión")
@@ -69,8 +58,8 @@ def mostrar_menu_principal():
 
 def mostrar_menu_admin():
     print("\n--- 🛠️ PANEL ADMINISTRADOR ---")
-    print("1. Agregar Paquete")
-    print("2. Eliminar Paquete")
+    print("1. Gestión de Destinos")
+    print("2. Gestión de Paquetes")
     print("3. Ver Paquetes")
     print("4. Cerrar Sesión")
 
@@ -82,33 +71,29 @@ def mostrar_menu_usuario(nombre: str):
     print("3. Cerrar Sesión")
 
 
-# ==============================
-# MAIN
-# ==============================
+def signal_handler(sig, frame):
+    print("\n\n👋 Saliendo del sistema...")
+    sys.exit(0)
 
 def main():
-    # Inicializar sistema y BD
+    signal.signal(signal.SIGINT, signal_handler)
+    
     print("⚙️ Verificando sistema...")
     setup_db.inicializar_base_datos()
     limpiar_pantalla()
 
-    # DAOs
     usuario_dao = UsuarioDAO()
     reserva_dao = ReservaDAO()
     paquete_dao = PaqueteDAO()
+    destino_dao = DestinoDAO()
 
     usuario_actual = None
 
     while True:
-
-        # ==============================
-        # NO LOGUEADO
-        # ==============================
         if not usuario_actual:
             mostrar_menu_principal()
             opcion = input("Seleccione una opción: ").strip()
 
-            # LOGIN
             if opcion == "1":
                 email = input("Email: ").strip()
                 password = input_password()
@@ -121,21 +106,36 @@ def main():
                 except Exception:
                     print("❌ Error interno del sistema")
 
-            # REGISTRO
             elif opcion == "2":
+                from UTILS.validators import validar_nombre, validar_email, validar_password
+                
                 nombre = input("Nombre completo: ").strip()
                 email = input("Email: ").strip()
                 password = input_password()
 
                 try:
+                    # Validaciones
+                    es_valido, mensaje = validar_nombre(nombre)
+                    if not es_valido:
+                        print(f"❌ {mensaje}")
+                        continue
+                    
+                    if not validar_email(email):
+                        print("❌ Email inválido. Use el formato: usuario@dominio.com")
+                        continue
+                    
+                    es_valido, mensaje = validar_password(password)
+                    if not es_valido:
+                        print(f"❌ {mensaje}")
+                        continue
+                    
                     usuario_dao.registrar(nombre, email, password)
                     print("✅ Usuario registrado correctamente")
                 except ValueError as e:
                     print(f"❌ {e}")
-                except Exception:
-                    print("❌ Error al registrar usuario")
+                except Exception as e:
+                    print(f"❌ Error al registrar usuario: {e}")
 
-            # SALIR
             elif opcion == "3":
                 print("👋 Hasta luego")
                 break
@@ -143,42 +143,149 @@ def main():
             else:
                 print("Opción inválida")
 
-        # ==============================
-        # LOGUEADO
-        # ==============================
         else:
-            # -------- ADMIN --------
             if usuario_actual.rol == "admin":
                 mostrar_menu_admin()
                 opcion = input(">> ").strip()
 
-                if opcion == "1":  # Crear paquete
-                    try:
-                        nombre = input("Nombre: ")
-                        desc = input("Descripción: ")
-                        precio = float(input("Precio: "))
-                        stock = int(input("Stock: "))
-                        paquete_dao.crear_paquete(nombre, desc, precio, stock)
-                        print("✅ Paquete creado")
-                    except ValueError:
-                        print("❌ Datos inválidos")
-                    except Exception:
-                        print("❌ Error al crear paquete")
+                if opcion == "1":  # Gestión de Destinos
+                    print("\n--- 🗺️ GESTIÓN DE DESTINOS ---")
+                    print("1. Agregar Destino")
+                    print("2. Ver Destinos")
+                    print("3. Modificar Destino")
+                    print("4. Eliminar Destino")
+                    print("5. Volver")
+                    
+                    sub_opcion = input(">> ").strip()
+                    
+                    if sub_opcion == "1":  # Crear destino
+                        try:
+                            nombre = input("Nombre del destino: ").strip()
+                            desc = input("Descripción: ").strip()
+                            actividades = input("Actividades (separadas por comas): ").strip()
+                            costo = float(input("Costo: "))
+                            
+                            destino_id = destino_dao.crear(nombre, desc, actividades, costo)
+                            print(f"✅ Destino creado con ID: {destino_id}")
+                        except ValueError as e:
+                            print(f"❌ {e}")
+                        except Exception as e:
+                            print(f"❌ Error: {e}")
+                    
+                    elif sub_opcion == "2":  # Listar destinos
+                        destinos = destino_dao.obtener_todos()
+                        print("\nID   Nombre                     Costo")
+                        print("-" * 50)
+                        for d in destinos:
+                            print(f"{d.id:<4} {d.nombre:<25} ${d.costo:,.0f}")
+                    
+                    elif sub_opcion == "3":  # Modificar destino
+                        try:
+                            destino_id = int(input("ID del destino a modificar: "))
+                            destino = destino_dao.obtener_por_id(destino_id)
+                            
+                            if not destino:
+                                print("❌ Destino no encontrado")
+                                continue
+                            
+                            print(f"\nDestino actual: {destino.nombre} - ${destino.costo:,.0f}")
+                            nombre = input(f"Nuevo nombre (Enter para mantener '{destino.nombre}'): ").strip() or destino.nombre
+                            desc = input(f"Nueva descripción (Enter para mantener): ").strip() or destino.descripcion
+                            actividades = input(f"Nuevas actividades (Enter para mantener): ").strip() or destino.actividades
+                            costo_str = input(f"Nuevo costo (Enter para mantener ${destino.costo:,.0f}): ").strip()
+                            costo = float(costo_str) if costo_str else destino.costo
+                            
+                            destino_dao.actualizar(destino_id, nombre, desc, actividades, costo)
+                            print("✅ Destino actualizado")
+                        except ValueError as e:
+                            print(f"❌ {e}")
+                        except Exception as e:
+                            print(f"❌ Error: {e}")
+                    
+                    elif sub_opcion == "4":  # Eliminar destino
+                        try:
+                            destino_id = int(input("ID del destino a eliminar: "))
+                            destino_dao.eliminar(destino_id)
+                            print("✅ Destino eliminado")
+                        except ValueError as e:
+                            print(f"❌ {e}")
+                        except Exception as e:
+                            print(f"❌ Error: {e}")
 
-                elif opcion == "2":  # Eliminar paquete
-                    try:
-                        pid = int(input("ID paquete: "))
-                        paquete_dao.eliminar_paquete(pid)
-                        print("✅ Paquete eliminado")
-                    except Exception:
-                        print("❌ Error al eliminar paquete")
+                elif opcion == "2":  # Gestión de Paquetes
+                    print("\n--- 📦 GESTIÓN DE PAQUETES ---")
+                    print("1. Crear Paquete (con destinos)")
+                    print("2. Crear Paquete (precio manual)")
+                    print("3. Eliminar Paquete")
+                    print("4. Volver")
+                    
+                    sub_opcion = input(">> ").strip()
+                    
+                    if sub_opcion == "1":  # Crear paquete con destinos (cálculo automático)
+                        try:
+                            # Mostrar destinos disponibles
+                            destinos = destino_dao.obtener_todos()
+                            print("\nDestinos disponibles:")
+                            for d in destinos:
+                                print(f"  {d.id}. {d.nombre} - ${d.costo:,.0f}")
+                            
+                            nombre = input("\nNombre del paquete: ").strip()
+                            desc = input("Descripción: ").strip()
+                            stock = int(input("Stock disponible: "))
+                            
+                            # Seleccionar destinos
+                            destinos_str = input("IDs de destinos (separados por comas, ej: 1,2,3): ").strip()
+                            destino_ids = [int(x.strip()) for x in destinos_str.split(",") if x.strip()]
+                            
+                            if not destino_ids:
+                                print("❌ Debe seleccionar al menos un destino")
+                                continue
+                            
+                            # Validar que los destinos existan
+                            for did in destino_ids:
+                                if not destino_dao.obtener_por_id(did):
+                                    raise ValueError(f"Destino con ID {did} no existe")
+                            
+                            # Crear paquete (el precio se calcula automáticamente)
+                            paquete_id = paquete_dao.crear_paquete(nombre, desc, stock, destino_ids)
+                            precio_calculado = destino_dao.calcular_precio_paquete(destino_ids)
+                            print(f"✅ Paquete creado con ID: {paquete_id}")
+                            print(f"💰 Precio calculado automáticamente: ${precio_calculado:,.0f}")
+                        except ValueError as e:
+                            print(f"❌ {e}")
+                        except Exception as e:
+                            print(f"❌ Error: {e}")
+                    
+                    elif sub_opcion == "2":  # Crear paquete con precio manual
+                        try:
+                            nombre = input("Nombre: ").strip()
+                            desc = input("Descripción: ").strip()
+                            precio = float(input("Precio: "))
+                            stock = int(input("Stock: "))
+                            
+                            paquete_id = paquete_dao.crear_paquete_con_precio_manual(nombre, desc, precio, stock)
+                            print(f"✅ Paquete creado con ID: {paquete_id}")
+                        except ValueError as e:
+                            print(f"❌ {e}")
+                        except Exception as e:
+                            print(f"❌ Error: {e}")
+                    
+                    elif sub_opcion == "3":  # Eliminar paquete
+                        try:
+                            pid = int(input("ID paquete: "))
+                            paquete_dao.eliminar_paquete(pid)
+                            print("✅ Paquete eliminado")
+                        except ValueError as e:
+                            print(f"❌ {e}")
+                        except Exception as e:
+                            print(f"❌ Error: {e}")
 
                 elif opcion == "3":  # Listar paquetes
                     paquetes = reserva_dao.listar_paquetes()
-                    print("\nID   Nombre                     Stock")
-                    print("-" * 40)
+                    print("\nID   Nombre                     Precio      Stock")
+                    print("-" * 60)
                     for p in paquetes:
-                        print(f"{p['id']:<4} {p['nombre']:<25} {p['stock']}")
+                        print(f"{p['id']:<4} {p['nombre']:<25} ${p['precio']:<10,.0f} {p['stock']}")
 
                 elif opcion == "4":
                     usuario_actual = None
@@ -187,12 +294,11 @@ def main():
                 else:
                     print("Opción inválida")
 
-            # -------- CLIENTE --------
             else:
                 mostrar_menu_usuario(usuario_actual.nombre)
                 opcion = input(">> ").strip()
 
-                if opcion == "1":  # Reservar
+                if opcion == "1":
                     paquetes = reserva_dao.listar_paquetes()
                     print("\nID   Nombre                     Precio   Stock")
                     print("-" * 55)
@@ -226,7 +332,7 @@ def main():
                     except Exception:
                         print("❌ No se pudo completar la reserva")
 
-                elif opcion == "2":  # Historial
+                elif opcion == "2":
                     historial = reserva_dao.obtener_historial(usuario_actual.id)
                     print("\n--- 📜 Historial ---")
                     if not historial:
@@ -242,10 +348,6 @@ def main():
                 else:
                     print("Opción inválida")
 
-
-# ==============================
-# ENTRY POINT
-# ==============================
 
 if __name__ == "__main__":
     main()

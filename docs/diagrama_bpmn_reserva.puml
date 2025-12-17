@@ -1,0 +1,51 @@
+@startuml diagrama_bpmn_reserva
+
+skinparam backgroundColor #FFFFFF
+skinparam activity {
+    BackgroundColor #E8F4F8
+    BorderColor #2E86AB
+    FontSize 12
+}
+skinparam note {
+    BackgroundColor #FFF9E3
+    BorderColor #F4A261
+}
+
+title Proceso de Negocio: Reserva de Paquete Turistico\nDiagrama BPMN
+
+|#LightYellow|Cliente|
+start
+:Cliente selecciona paquete;
+|#LightBlue|Sistema|
+:Validar Stock\n(Compuerta XOR);
+|#LightGray|Base de Datos|
+:Consultar Stock\nSELECT stock FROM paquetes\nWHERE id = ? FOR UPDATE;
+|#LightBlue|Sistema|
+if (Stock > 0?) then (Sí)
+    :Calcular Precio Total\nSuma de costos de destinos;
+    :Crear Reserva\n(Transaccion ACID);
+    |#LightGray|Base de Datos|
+    :Guardar Reserva\nINSERT INTO reservas\n(usuario_id, paquete_id, total_pagado);
+    :Actualizar Stock\nUPDATE paquetes\nSET stock = stock - 1;
+    |#LightBlue|Sistema|
+    :Confirmar Transacción\nCOMMIT;
+    |#LightYellow|Cliente|
+    :Mostrar Comprobante\nID Reserva generado;
+    stop
+else (No - Stock = 0)
+    |#LightBlue|Sistema|
+    :Notificar Error\n"Stock insuficiente";
+    |#LightYellow|Cliente|
+    :Volver al menú de búsqueda;
+    stop
+endif
+
+note right
+    <b>Validacion Transaccional</b>
+    - SELECT FOR UPDATE: Bloqueo pesimista
+    - Transacción ACID garantiza consistencia
+    - Rollback automático en caso de error
+    - Previene condiciones de carrera
+end note
+
+@enduml
