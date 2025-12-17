@@ -1,3 +1,7 @@
+# enlace del repositorio
+https://github.com/vngerus/viajes_aventura
+
+
 # Sistema de Gestion "Viajes Aventura"
 
 Sistema de gestion de reservas turisticas desarrollado en Python para la agencia de viajes "Viajes Aventura". El sistema permite gestionar destinos, paquetes turisticos y reservas, con autenticacion segura y persistencia en base de datos MySQL.
