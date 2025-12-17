@@ -401,6 +401,7 @@ source venv/Scripts/activate
 python SCRIPTS/setup_database.py
 ```
 
+
 ### Error: "Too many connections"
 
 **Causa:** Múltiples conexiones abiertas simultáneamente.

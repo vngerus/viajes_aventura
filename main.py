@@ -320,17 +320,24 @@ def main():
                         ).lower()
 
                         if confirm == "s":
+                            precio = float(paquete["precio"])
                             reserva_dao.crear_reserva(
                                 usuario_actual.id,
                                 pid,
-                                paquete["precio"]
+                                precio
                             )
                             print("🎉 Reserva confirmada")
 
                     except ValueError as e:
                         print(f"❌ {e}")
-                    except Exception:
-                        print("❌ No se pudo completar la reserva")
+                    except Exception as e:
+                        error_msg = str(e)
+                        if "Stock insuficiente" in error_msg:
+                            print("❌ Stock insuficiente para este paquete")
+                        elif "Connection" in error_msg or "MySQL" in error_msg:
+                            print("❌ Error de conexión a la base de datos")
+                        else:
+                            print(f"❌ Error al crear reserva: {error_msg}")
 
                 elif opcion == "2":
                     historial = reserva_dao.obtener_historial(usuario_actual.id)

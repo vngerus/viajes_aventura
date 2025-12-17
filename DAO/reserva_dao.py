@@ -9,7 +9,7 @@ class ReservaDAO:
     def listar_paquetes(self):
         conn = self.db.conectar()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id, nombre, precio, stock FROM paquetes WHERE stock > 0")
+        cursor.execute("SELECT DISTINCT id, nombre, precio, stock FROM paquetes WHERE stock > 0 ORDER BY id")
         paquetes = cursor.fetchall()
         cursor.close()
         return paquetes
