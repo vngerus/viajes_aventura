@@ -14,27 +14,14 @@ Sistema de gestion de reservas turisticas desarrollado en Python para la agencia
 
 ### 1. Crear y activar el entorno virtual
 
-**Windows (PowerShell/CMD):**
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-**Windows (Git Bash):**
 ```bash
 python -m venv venv
 source venv/Scripts/activate
 ```
 
-**Linux/Mac:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
 **Verificar que el venv está activo:**
 - Deberías ver `(venv)` al inicio de la línea de comandos
-- Verificar con: `python -c "import sys; print(sys.executable)"` (debe apuntar a `venv\Scripts\python.exe`)
+- Verificar con: `python -c "import sys; print(sys.executable)"`
 
 ### 2. Instalar dependencias
 
@@ -50,33 +37,14 @@ python -m pip install -r requirements.txt
 
 **Verificar instalación:**
 ```bash
-python -c "import mysql.connector; print('✅ mysql-connector-python instalado')"
-python -c "import dotenv; print('✅ python-dotenv instalado')"
+python -c "import mysql.connector; print('mysql-connector-python instalado')"
+python -c "import dotenv; print('python-dotenv instalado')"
 ```
 
 ### 3. Configurar variables de entorno
 
-Crear archivo `.env` en la raíz del proyecto con el siguiente contenido:
+Crear archivo `.env` en la raíz del proyecto:
 
-**Windows (PowerShell):**
-```powershell
-@"
-DB_HOST=localhost
-DB_USER=root
-DB_PASS=tu_contraseña
-DB_NAME=viajes_aventura
-"@ | Out-File -FilePath .env -Encoding utf8
-```
-
-**Windows (CMD):**
-```cmd
-echo DB_HOST=localhost > .env
-echo DB_USER=root >> .env
-echo DB_PASS=tu_contraseña >> .env
-echo DB_NAME=viajes_aventura >> .env
-```
-
-**Windows (Git Bash) / Linux / Mac:**
 ```bash
 cat > .env << EOF
 DB_HOST=localhost
@@ -110,24 +78,12 @@ python SCRIPTS/setup_database.py
 **Si hay errores:**
 - Verifica que MySQL esté corriendo: `mysql --version`
 - Verifica las credenciales en `.env`
-- Asegúrate de usar el Python del venv: `venv\Scripts\python.exe SCRIPTS\setup_database.py` (Windows)
+- Asegúrate de que el venv esté activo
 
 ### 5. Ejecutar la aplicación
 
 ```bash
 python main.py
-```
-
-**O usando el Python del venv directamente (si hay problemas):**
-
-**Windows:**
-```bash
-venv\Scripts\python.exe main.py
-```
-
-**Linux/Mac:**
-```bash
-venv/bin/python main.py
 ```
 
 ### Credenciales por Defecto
@@ -398,7 +354,6 @@ viajes_aventura/
 
 - Asegúrate de que el venv esté activo
 - Ejecutar `python SCRIPTS/setup_database.py` para inicializar la BD
-- Si persiste, usar: `venv\Scripts\python.exe SCRIPTS\setup_database.py` (Windows)
 
 ### Error: "ModuleNotFoundError: No module named 'mysql'"
 
@@ -410,7 +365,6 @@ viajes_aventura/
 ### Error: "Credenciales invalidas" al iniciar sesion
 
 - Ejecutar `python SCRIPTS/recrear_admin.py` para recrear el admin
-- O usar: `venv\Scripts\python.exe SCRIPTS\recrear_admin.py` (Windows)
 
 ## Generar Diagramas
 
