@@ -6,6 +6,10 @@ https://github.com/vngerus/viajes_aventura
 
 https://github.com/users/vngerus/projects/9
 
+# PPT
+
+https://www.canva.com/design/DAG7unQni-U/IEqnlG0CKLPe7zFp_5pAwg/edit?utm_content=DAG7unQni-U&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+
 # Sistema de Gestion "Viajes Aventura"
 
 Sistema de gestion de reservas turisticas desarrollado en Python para la agencia de viajes "Viajes Aventura". El sistema permite gestionar destinos, paquetes turisticos y reservas, con autenticacion segura y persistencia en base de datos MySQL.
@@ -21,6 +25,7 @@ Antes de comenzar, asegúrate de tener instalado:
 - **Git Bash** (o terminal bash compatible)
 
 **Verificar instalaciones:**
+
 ```bash
 python --version
 mysql --version
@@ -34,6 +39,7 @@ source venv/Scripts/activate
 ```
 
 **Verificar que el venv está activo:**
+
 - Deberías ver `(venv)` al inicio de la línea de comandos
 - Verificar con: `python -c "import sys; print(sys.executable)"`
 
@@ -47,6 +53,7 @@ python -m pip install -r requirements.txt
 ```
 
 **Verificar instalación:**
+
 ```bash
 python -c "import mysql.connector; print('mysql-connector-python instalado')"
 python -c "import dotenv; print('python-dotenv instalado')"
@@ -66,6 +73,7 @@ EOF
 ```
 
 **O crear manualmente:** Crear archivo `.env` en la raíz con:
+
 ```env
 DB_HOST=localhost
 DB_USER=root
@@ -78,22 +86,26 @@ DB_NAME=viajes_aventura
 ### 4. Inicializar la base de datos
 
 **IMPORTANTE:** Asegúrate de que:
+
 - El venv esté activo (deberías ver `(venv)` en la terminal)
 - MySQL esté corriendo y accesible
 - El archivo `.env` esté configurado correctamente con tus credenciales de MySQL
 
 **Verificar que MySQL esté corriendo:**
+
 ```bash
 mysql --version
 # Si no funciona, verifica que el servicio MySQL esté iniciado
 ```
 
 **Inicializar la base de datos:**
+
 ```bash
 python SCRIPTS/setup_database.py
 ```
 
 **Salida esperada:**
+
 ```
  Inicializando sistema...
  Ejecutando script: BDD\init_db.sql
@@ -103,6 +115,7 @@ Sistema inicializado correctamente
 ```
 
 **Si hay errores:**
+
 - Verifica que MySQL esté corriendo: `mysql --version`
 - Verifica las credenciales en `.env` (usuario y contraseña correctos)
 - Asegúrate de que el venv esté activo
@@ -371,6 +384,7 @@ viajes_aventura/
 **Causa:** El venv no está activo o las dependencias no están instaladas.
 
 **Solución:**
+
 ```bash
 source venv/Scripts/activate
 python -m pip install -r requirements.txt
@@ -382,6 +396,7 @@ python -c "import mysql.connector; print('OK')"
 **Causa:** Credenciales incorrectas o MySQL no está corriendo.
 
 **Solución:**
+
 1. Verificar que MySQL esté corriendo: `mysql --version`
 2. Verificar credenciales en `.env`:
    - `DB_USER` debe ser un usuario válido de MySQL (generalmente `root`)
@@ -396,17 +411,18 @@ python -c "import mysql.connector; print('OK')"
 **Causa:** La base de datos no ha sido inicializada.
 
 **Solución:**
+
 ```bash
 source venv/Scripts/activate
 python SCRIPTS/setup_database.py
 ```
-
 
 ### Error: "Too many connections"
 
 **Causa:** Múltiples conexiones abiertas simultáneamente.
 
 **Solución:**
+
 - Cerrar todas las instancias de la aplicación
 - Verificar que se esté usando el patrón Singleton correctamente
 - Reiniciar MySQL si es necesario
@@ -416,12 +432,14 @@ python SCRIPTS/setup_database.py
 **Causa:** El usuario admin no existe o la contraseña fue cambiada.
 
 **Solución:**
+
 ```bash
 source venv/Scripts/activate
 python SCRIPTS/recrear_admin.py
 ```
 
 **Credenciales por defecto del admin:**
+
 - Email: `admin@viajes.com`
 - Contraseña: `admin123`
 
@@ -430,6 +448,7 @@ python SCRIPTS/recrear_admin.py
 **Causa:** Ruta incorrecta o venv no creado.
 
 **Solución:**
+
 ```bash
 ls -la venv/Scripts/
 python -m venv venv
