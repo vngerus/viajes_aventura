@@ -254,20 +254,6 @@ reservas (id, usuario_id, paquete_id, fecha_reserva, total_pagado, estado)
 
 Cuando se crea un paquete seleccionando destinos, el precio se calcula automaticamente sumando los costos de los destinos incluidos.
 
-## Validacion de Stock
-
-El sistema implementa validacion transaccional usando `SELECT FOR UPDATE` para prevenir overbooking y garantizar consistencia de datos.
-
-## Tecnologias Utilizadas
-
-- **Python 3.8+**: Lenguaje de programacion
-- **MySQL**: Base de datos relacional
-- **mysql-connector-python**: Conector para MySQL
-- **python-dotenv**: Gestion de variables de entorno
-- **hashlib**: Algoritmos de hashing (PBKDF2)
-- **tabulate**: Formato de tablas en consola
-- **PlantUML**: Generacion de diagramas UML
-
 ## Estructura de Archivos
 
 ```
@@ -315,7 +301,7 @@ viajes_aventura/
 
 ### Error: "Access denied for user"
 
-- Verificar credenciales en `.env`
+- Verificar credenciales en `.env.example`
 - Asegurar que MySQL este corriendo
 
 ### Error: "Table doesn't exist"
